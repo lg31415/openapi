@@ -14,10 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import url
-from queryapi.views import ipquery
+from queryapi.views import MetricPush,IpQuery
 
 urlpatterns = [
     #url(r'^admin/', admin.site.urls),
-    url(r'^openapi/ipquery', ipquery),
-
+    url(r'^openapi/ipquery', IpQuery),
+    url(r'^openapi/push', MetricPush),
 ]
