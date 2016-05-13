@@ -2,6 +2,8 @@
 #-*-coding:utf-8-*-
 from django.http  import HttpResponse
 from ipip import IP
+from queryapi.models import AreaCode
+from collections import OrderedDict
 import os,json,httplib
 # Create your views here.
 def Get_Client_Ip(request):
@@ -28,9 +30,24 @@ def GetArea(req):
     Area=IP.find('202.99.224.68').split('\t')
     Area.append(Get_Client_Ip(req))
     ResultStr=''
+    Code=''
     Mesage=dict(zip(Key,Area))
+    # print Mesage
     for key in Mesage.keys():
-        ResultStr=ResultStr+key+"="+Mesage[key]+ ','
+        if  key=='country':
+            CodeValue=Get_Area_Code(Mesage[key],'COUNTRY')
+        elif key=='province':
+            CodeValue=Get_Area_Code(Mesage[key],'PROVINCE')
+        elif key=='city':
+            CodeValue=Get_Area_Code(Mesage[key],'CITY')
+        elif key=='county':
+            CodeValue=Get_Area_Code(Mesage[key],'COUNTY')
+        elif key=='isp':
+            CodeValue=Get_Area_Code(Mesage[key],'ISP')
+        elif key=='ip':
+            CodeValue=Mesage[key]
+        if key in ['province','city','isp','ip']:
+             ResultStr=ResultStr+key+"="+CodeValue+ ','
     return ResultStr
 def Http_Push_Json(host,port,url,body):
     try:
@@ -50,16 +67,18 @@ def Http_Push_Json(host,port,url,body):
 def MetricPush(req):
     ResponseJson=''
     try:
-        MetricJsonMesage=''
+        MetricJsonMesage=""
         if req.method == 'POST':
             for JsonString in  json.loads(req.body):
                 JsonString['tags']=JsonString['tags']+GetArea(req)
                 if MetricJsonMesage <>"":
                     MetricJsonMesage= MetricJsonMesage+','+json.dumps(JsonString)
                 elif MetricJsonMesage =="":
-                    MetricJsonMesage=MetricJsonMesage+json.dumps(JsonString)
+                    MetricJsonMesage=MetricJsonMesage+json.dumps({'endpoint':JsonString['endpoint'],'metric':JsonString['metric'],'value':JsonString['value'],'step':JsonString['step'],'counterType':JsonString['counterType'],'tags':JsonString['tags'],'timestamp':JsonString['timestamp']})
                 elif len(MetricJsonMesage)>65536:
                     MetricJsonMesage="["+MetricJsonMesage+"]"
+                    ResponseJson=Http_Push_Json('192.168.11.202','6060','/api/push',MetricJsonMesage)
+                    HttpResponse( ResponseJson , content_type='application/json')
                     MetricJsonMesage=''
             MetricJsonMesage="["+MetricJsonMesage+"]"
             ResponseJson=Http_Push_Json('192.168.11.202','6060','/api/push',MetricJsonMesage)
@@ -69,3 +88,10 @@ def MetricPush(req):
         import sys
         print(sys.exc_info()[0], sys.exc_info()[1])
     return HttpResponse( ResponseJson , content_type='application/json')
+def Get_Area_Code(AreaName,Areatype):
+    try:
+        # print AreaName,Areatype
+        Data=AreaCode.objects.get(area_name=AreaName,area_type=Areatype)
+        return Data.area_code
+    except:
+        return ''
