@@ -30,10 +30,7 @@ def GetArea(req):
     ResultStr=''
     Mesage=dict(zip(Key,Area))
     for key in Mesage.keys():
-        Key=Mesage[key].decode("utf8")
-        # ResultStr=ResultStr+key+"="+Mesage[key]+ ','
-        ResultStr=ResultStr+key+"="+Key+ ','
-        # ResultStr=''
+        ResultStr=ResultStr+key+"="+Mesage[key]+ ','
     return ResultStr
 def Http_Push_Json(host,port,url,body):
     try:
