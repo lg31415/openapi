@@ -8,7 +8,7 @@ import os,json,httplib
 # Create your views here.
 def Get_Client_Ip(request):
     try:
-      real_ip = request.META['HTTP_X_FORWARDED_FOR']
+      real_ip = request.META['HTTP_X_FORWARDED_HOST']
       regip = real_ip.split(",")[0]
     except:
       try:
@@ -49,6 +49,17 @@ def GetArea(req):
         if key in ['province','city','isp','ip']:
              ResultStr=ResultStr+key+"="+CodeValue+ ','
     return ResultStr
+def GetAreaName(req):
+    IP.load(os.path.abspath("mydata4vipweek2.dat"))
+    Key=['country','province','city','county','isp','ip']
+    Area=IP.find(Get_Client_Ip(req)).split('\t')
+    Area.append(Get_Client_Ip(req))
+    Mesage=dict(zip(Key,Area))
+    ResultStr=''
+    for key in Mesage.keys():
+        if key in ['province','city','isp','ip']:
+             ResultStr=ResultStr+key+"="+Mesage[key]+ ','
+    return ResultStr
 def Http_Push_Json(host,port,url,body):
     try:
         headers = {"Content-type": "application/json",
@@ -70,7 +81,8 @@ def MetricPush(req):
         MetricJsonMesage=""
         if req.method == 'POST':
             for JsonString in  json.loads(req.body):
-                JsonString['tags']=JsonString['tags']+GetArea(req)
+                JsonString['tags']=JsonString['tags']+GetAreaName(req)
+                # JsonString['tags']=JsonString['tags']+GetArea(req)
                 if MetricJsonMesage <>"":
                     MetricJsonMesage= MetricJsonMesage+','+json.dumps(JsonString)
                 elif MetricJsonMesage =="":
