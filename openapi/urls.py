@@ -15,13 +15,11 @@ Including another URLconf
 """
 from django.conf.urls import url
 from queryapi.views import MetricPush,IpQuery
-from brascontrol.views import BrasSendBreaker,BrasSendLocker
+from brascontrol.views import BrasSendCmd
 
 urlpatterns = [
     #url(r'^admin/', admin.site.urls),
     url(r'^openapi/ipquery', IpQuery),
     url(r'^openapi/push', MetricPush),
-    url(r'^control/locker', BrasSendLocker),
-    url(r'^control/breaker', BrasSendBreaker),
-
+    url(r'^control/(.+)/$', BrasSendCmd),
 ]
